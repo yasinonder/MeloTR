@@ -37,6 +37,21 @@ jobs:
         run: python3 tools/configure_android.py
       - name: Fetch dependencies
         run: flutter pub get
+      - name: Align legacy MediaStore plugin with current Android SDK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          candidates = list((Path.home()/'.pub-cache'/'hosted').glob('*/media_store_plus-*/android/build.gradle'))
+          if len(candidates) != 1:
+              raise SystemExit(f'Expected exactly one MediaStore Gradle file, got: {candidates}')
+          path = candidates[0]
+          source = path.read_text(encoding='utf-8')
+          old = 'compileSdkVersion 33'
+          if old not in source:
+              raise SystemExit(f'Unexpected media_store_plus Gradle settings: {path}')
+          path.write_text(source.replace(old, 'compileSdkVersion 36', 1), encoding='utf-8')
+          print(f'Updated Android compileSdk 33 -> 36 in {path}')
+          PY
       - name: Check new import sources
         run: |
           dart format --output=none --set-exit-if-changed lib/mp3_import_service.dart lib/mp3_import_tools.dart || true
