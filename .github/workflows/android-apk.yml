@@ -1,0 +1,64 @@
+name: MeloTR Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: melotr-apk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Extract MeloTR application sources
+        run: |
+          base64 -d tools/melotr_sources.tar.xz.b64 | tar -xJf -
+          mkdir -p assets/icons
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          p=Path("assets/icons/placeholder.png")
+          p.write_bytes(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg=="))
+          PY
+      - name: Save readable source files to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f lib/ test/ tools/configure_android.py tools/check_project.py assets/icons/placeholder.png
+          git add pubspec.yaml analysis_options.yaml README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: unpack Flutter MeloTR application sources"
+            git push
+          fi
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create Android project
+        run: flutter create --platforms=android --org com.melotr --project-name melotr .
+      - name: Set up media playback and Android permissions
+        run: python3 tools/configure_android.py
+      - name: Fetch dependencies
+        run: flutter pub get
+      - name: Test Flutter code
+        run: flutter test
+      - name: Build universal APK
+        run: flutter build apk --release
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeloTR-v0.1.0-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
