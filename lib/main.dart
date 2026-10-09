@@ -9,6 +9,7 @@ import 'package:on_audio_query_pluse/on_audio_query.dart';
 import 'music_library.dart';
 import 'mp3_import_tools.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:media_store_plus/media_store_plus.dart';
 
 const _bg = Color(0xFF090D18);
 const _surface = Color(0xFF151B2C);
@@ -21,6 +22,8 @@ const _accents = [_pink, _violet, _blue];
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await MediaStore.ensureInitialized();
+  MediaStore.appFolder = 'MeloTR';
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.melotr.music.playback',
     androidNotificationChannelName: 'MeloTR müzik çalma',
