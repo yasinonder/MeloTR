@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'music_library.dart';
 
@@ -552,26 +551,6 @@ class _SearchPageState extends State<SearchPage> {
   String text = '';
   String category = 'Tümü';
   final field = TextEditingController();
-  Future<void> _openYouTubeSearch() async {
-    final keyword = field.text.trim();
-    if (keyword.isEmpty) return;
-    final url = Uri.https('www.youtube.com', '/results',
-        {'search_query': keyword});
-    try {
-      final success = await launchUrl(url, mode: LaunchMode.externalApplication);
-      if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('YouTube açılamadı. Tarayıcıyı kontrol edin.')),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('YouTube araması başlatılamadı.')),
-        );
-      }
-    }
-  }
   @override
   void dispose() {field.dispose(); super.dispose();}
   @override
@@ -602,35 +581,6 @@ class _SearchPageState extends State<SearchPage> {
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18),
               borderSide: const BorderSide(color: _violet)),
           ))),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(19, 12, 19, 2),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-          decoration: BoxDecoration(
-            color: _surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _pink.withOpacity(.42)),
-          ),
-          child: Row(children: [
-            const Icon(Icons.play_circle_fill_rounded, color: _pink, size: 30),
-            const SizedBox(width: 9),
-            const Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('YouTube’da şarkı ara',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                Text('Resmi YouTube’da açılır.',
-                    style: TextStyle(fontSize: 11, color: _muted)),
-              ],
-            )),
-            const SizedBox(width: 6),
-            TextButton(
-              onPressed: text.trim().isEmpty ? null : () => unawaited(_openYouTubeSearch()),
-              child: const Text('Ara ↗'),
-            ),
-          ]),
-        ),
-      ),
       SizedBox(height: 59, child: ListView(scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         children: ['Tümü', 'Şarkılar', 'Sanatçılar', 'Albümler'].map((c) =>
