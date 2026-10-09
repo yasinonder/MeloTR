@@ -80,3 +80,10 @@ APK çıkışı: `build/app/outputs/flutter-apk/app-release.apk`
 Kod oluşturuldu ve içerik/yapı kontrolleri uygulandı; bu çalışma ortamında
 Flutter ve Android SDK olmadığı için fiziksel cihaz üzerinde doğrulanmış
 APK derlemesi yapılmadı. CI iş akışı derleme/test için dahil edildi.
+
+## v0.1.1 – YouTube araması
+
+MeloTR Ara sayfasındaki arama kutusuna şarkı veya sanatçı yazıp **YouTube'da şarkı ara** düğmesine basın. Sonuçlar resmi YouTube uygulamasında veya tarayıcıda açılır.
+
+**Önemli:** Bu özellik YouTube videolarını veya seslerini MP3 olarak indirmez. YouTube'un yetkilendirmediği ses/video indirmeyi desteklemez. Cihazdaki izinli MP3/M4A dosyaları ise MeloTR'nin çevrimdışı oynatıcısında kullanılabilir.
+
