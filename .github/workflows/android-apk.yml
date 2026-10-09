@@ -55,10 +55,19 @@ jobs:
         run: flutter test
       - name: Build universal APK
         run: flutter build apk --release
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: MeloTR-v0.1.0-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
-          retention-days: 30
+      - name: Publish APK to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk="build/app/outputs/flutter-apk/app-release.apk"
+          test -s "$apk"
+          ls -lh "$apk"
+          if gh release view v0.1.0 >/dev/null 2>&1; then
+            gh release upload v0.1.0 "$apk#MeloTR-v0.1.0.apk" --clobber
+          else
+            gh release create v0.1.0 "$apk#MeloTR-v0.1.0.apk" \
+              --target "$GITHUB_SHA" \
+              --title "MeloTR v0.1.0" \
+              --notes "Android universal release APK. Telefonunuza indirip yükleyebilirsiniz."
+          fi
