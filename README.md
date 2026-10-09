@@ -90,3 +90,19 @@ APK derlemesi yapılmadı. CI iş akışı derleme/test için dahil edildi.
 - MP3 kaydı doğrulanana kadar geçici videoyu tut. Doğrulamadan sonra sadece uygulamanın geçici videosunu sil. Kullanıcıya ait orijinal dosyalara asla dokunma.
 - YouTube araması YouTube'u açar; YouTube izleme sayfasından MP3 indirme desteklenmez.
 - Derlemede eski arşivin en güncel kaynak kodunu ezmesi engellendi.
+
+## MeloTR v0.1.3 — YouTube arama ve görselli sonuçlar
+
+Ara > YouTube bölümünde şarkı veya sanatçı arandığında ilgili video başlıkları,
+kanal adları ve kapak resimleri gösterilir. YouTube video URL'si de doğrudan
+arama kutusuna yapıştırılabilir. Video satırına basıldığında resmi olmayan
+YoutubeExplode istemcisiyle ses akışı alınır, FFmpeg ile MP3'e dönüştürülür ve
+MediaStore üzerinden MeloTR müzik kütüphanesine eklenir. 128-320 kbps ayarlanır.
+MP3 kaydı başarıyla doğrulanırsa sadece uygulamanın geçici ses/video dosyası
+silinir, kullanıcıya ait orijinal dosyalara dokunulmaz.
+
+**Kısıtlar:** Bu resmi YouTube API özelliği değildir; YouTube istemcilerinde
+olan değişiklikler, erişim ve içerik kısıtlamaları veya Javascript doğrulaması
+bazı içeriklerde bu deneysel yöntemi engelleyebilir. YouTube'un geliştirici
+politikaları, yazılı izin olmadan platform içeriklerinin indirilip çevrimdışı
+saklanmasına izin vermez. Yalnızca indirme yetkiniz olan içeriklerde kullanın.

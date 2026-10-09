@@ -14,6 +14,26 @@ class Mp3ImportService {
     'mp4', 'm4v', 'mov', 'webm', 'mkv', 'mp3', 'm4a', 'aac', 'wav', 'ogg'
   ];
 
+  /// Converts a private download; unlike user originals, this may be
+  /// deleted only after MediaStore confirms the MP3 was saved.
+  Future<String> fromAppTemporaryMedia({
+    required File mediaFile,
+    required String title,
+    required int kbps,
+    required void Function(String) onStatus,
+  }) async {
+    if (!await mediaFile.exists()) {
+      throw const FormatException('Geçici ses dosyası bulunamadı.');
+    }
+    return _convert(
+      input: mediaFile,
+      folder: mediaFile.parent,
+      title: title,
+      kbps: kbps,
+      onStatus: onStatus,
+    );
+  }
+
   Future<String> fromLocalVideo({
     required String path,
     required String displayName,

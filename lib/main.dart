@@ -8,6 +8,7 @@ import 'package:on_audio_query_pluse/on_audio_query.dart';
 
 import 'music_library.dart';
 import 'mp3_import_tools.dart';
+import 'youtube_music_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:media_store_plus/media_store_plus.dart';
 
@@ -549,10 +550,43 @@ class SearchPage extends StatefulWidget {
   const SearchPage({super.key, required this.library});
   final MusicLibrary library;
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<SearchPage> createState() => _SearchPageSwitcherState();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class _SearchPageSwitcherState extends State<SearchPage> {
+  bool youtube = true;
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(19, 8, 19, 0),
+      child: Row(children: [
+        Expanded(child: FilledButton.icon(
+          onPressed: youtube ? null : () => setState(() => youtube = true),
+          icon: const Icon(Icons.smart_display_rounded),
+          label: const Text('YouTube'),
+        )),
+        const SizedBox(width: 10),
+        Expanded(child: OutlinedButton.icon(
+          onPressed: youtube ? () => setState(() => youtube = false) : null,
+          icon: const Icon(Icons.library_music_rounded),
+          label: const Text('Telefonum'),
+        )),
+      ]),
+    ),
+    Expanded(child: youtube
+        ? YoutubeMusicSearch(library: widget.library)
+        : LocalMusicSearchPage(library: widget.library)),
+  ]);
+}
+
+class LocalMusicSearchPage extends StatefulWidget {
+  const LocalMusicSearchPage({super.key, required this.library});
+  final MusicLibrary library;
+  @override
+  State<LocalMusicSearchPage> createState() => _LocalMusicSearchPageState();
+}
+
+class _LocalMusicSearchPageState extends State<LocalMusicSearchPage> {
   String text = '';
   String category = 'Tümü';
   final field = TextEditingController();
@@ -828,7 +862,7 @@ class SettingsPage extends StatelessWidget {
       onTap: library.loading ? null : () => unawaited(library.refresh())),
     const SectionHeading(title: 'Uygulama', icon: Icons.info_outline_rounded),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
-      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.2 • MP3 dönüştürme',
+      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.3 • YouTube arama ve MP3',
         style: TextStyle(color: _muted))),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
       title: Text('Gizlilik'), subtitle: Text('Üyelik ve sunucu yok. Favoriler ve listeler cihazında saklanır.',
