@@ -1,9 +1,11 @@
 name: melotr
-description: MeloTR offline-first music player for Android
+description: MeloTR - cihazındaki müzikler için modern, çevrimdışı Android müzik çalar.
 publish_to: none
 version: 0.1.0+1
+
 environment:
   sdk: '>=3.6.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
@@ -12,9 +14,13 @@ dependencies:
   just_audio_background: ^0.0.1-beta.17
   audio_service: ^0.18.18
   shared_preferences: ^2.5.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/

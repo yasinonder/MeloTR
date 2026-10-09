@@ -23,7 +23,7 @@ yer almaz; gerçek kapaklar telefondaki dosyaların metadata'sından okunur.
 ## GitHub'dan APK oluşturma (bilgisayarda Flutter gerektirmez)
 
 1. GitHub hesabınızda `MeloTR` isimli **boş** bir repo oluşturun: https://github.com/new
-   - README, .gitignore veya lisans otomatik oluşturmayın.
+   - **Add a README file** seçeneğini işaretleyin; depo `main` dalıyla hazır açılsın.
 2. ChatGPT GitHub bağlantısına bu yeni repo için izin verin:
    https://github.com/settings/installations
    - ChatGPT için GitHub uygulamasının `Configure` bölümünde yeni `MeloTR` deposunu seçin.
