@@ -20,6 +20,8 @@ permissions = [
     ('android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK', None),
     ('android.permission.WAKE_LOCK', None),
     ('android.permission.POST_NOTIFICATIONS', None),
+    ('android.permission.INTERNET', None),
+    ('android.permission.WRITE_EXTERNAL_STORAGE', '29'),
 ]
 for p, maxsdk in permissions:
     if f'android:name="{p}"' not in source:
@@ -46,6 +48,8 @@ services = '''
 '''
 if 'android:name="com.ryanheise.audioservice.AudioService"' not in source:
     source = source.replace('</application>', services + '    </application>', 1)
+if 'android:requestLegacyExternalStorage=' not in source:
+    source = source.replace('<application ', '<application android:requestLegacyExternalStorage="true" ', 1)
 manifest.write_text(source, encoding='utf-8')
 for density in ['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']:
     source_icon = root / f'assets/icons/mipmap-{density}/ic_launcher.png'

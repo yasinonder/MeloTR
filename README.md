@@ -80,3 +80,13 @@ APK çıkışı: `build/app/outputs/flutter-apk/app-release.apk`
 Kod oluşturuldu ve içerik/yapı kontrolleri uygulandı; bu çalışma ortamında
 Flutter ve Android SDK olmadığı için fiziksel cihaz üzerinde doğrulanmış
 APK derlemesi yapılmadı. CI iş akışı derleme/test için dahil edildi.
+
+
+## MeloTR 0.1.2 — İzinli dosyalardan MP3 oluşturma
+
+- İndirilenler sayfasından telefondaki video/ses dosyasını seç, veya indirilebilir doğrudan HTTPS video/ses URL'sini gir.
+- FFmpeg ile MP3'e dönüştür (128, 192, 256, 320 kbps).
+- MediaStore ile Android Music/MeloTR klasörüne kaydet ve MeloTR kütüphanesini yenile.
+- MP3 kaydı doğrulanana kadar geçici videoyu tut. Doğrulamadan sonra sadece uygulamanın geçici videosunu sil. Kullanıcıya ait orijinal dosyalara asla dokunma.
+- YouTube araması YouTube'u açar; YouTube izleme sayfasından MP3 indirme desteklenmez.
+- Derlemede eski arşivin en güncel kaynak kodunu ezmesi engellendi.

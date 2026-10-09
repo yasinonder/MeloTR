@@ -7,6 +7,8 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:on_audio_query_pluse/on_audio_query.dart';
 
 import 'music_library.dart';
+import 'mp3_import_tools.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _bg = Color(0xFF090D18);
 const _surface = Color(0xFF151B2C);
@@ -551,6 +553,25 @@ class _SearchPageState extends State<SearchPage> {
   String text = '';
   String category = 'Tümü';
   final field = TextEditingController();
+  Future<void> openYouTubeSearch() async {
+    final term = field.text.trim();
+    if (term.isEmpty) return;
+    try {
+      final url = Uri.https('www.youtube.com', '/results',
+          {'search_query': term});
+      final opened = await launchUrl(url,
+          mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('YouTube açılamadı.')));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('YouTube araması açılamadı.')));
+      }
+    }
+  }
   @override
   void dispose() {field.dispose(); super.dispose();}
   @override
@@ -581,6 +602,15 @@ class _SearchPageState extends State<SearchPage> {
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18),
               borderSide: const BorderSide(color: _violet)),
           ))),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(19, 10, 19, 2),
+        child: OutlinedButton.icon(
+          onPressed: text.trim().isEmpty
+              ? null : () => unawaited(openYouTubeSearch()),
+          icon: const Icon(Icons.smart_display_rounded),
+          label: const Text('YouTube’da şarkıyı ara ↗'),
+        ),
+      ),
       SizedBox(height: 59, child: ListView(scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 15),
         children: ['Tümü', 'Şarkılar', 'Sanatçılar', 'Albümler'].map((c) =>
@@ -735,18 +765,19 @@ class DownloadsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final downloads = library.songs.where((song) {
       final path = song.data.toLowerCase().replaceAll('\\', '/');
-      return path.contains('/download/') || path.contains('/downloads/');
+      return path.contains('/download/') || path.contains('/downloads/') || path.contains('/music/melotr/');
     }).toList();
     return CustomScrollView(slivers: [
       const SliverToBoxAdapter(child: PageHeader(title: 'İndirilenler',
         subtitle: 'Telefonda bulunan müzik dosyaları')),
+      SliverToBoxAdapter(child: Mp3ImportTools(library: library)),
       SliverToBoxAdapter(child: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
         padding: const EdgeInsets.all(17),
         decoration: BoxDecoration(color: _surface, borderRadius: BorderRadius.circular(18)),
         child: const Row(children: [Icon(Icons.info_outline_rounded, color: _violet),
           SizedBox(width: 12), Expanded(child: Text(
-            'Bu bölüm İndirilenler klasöründeki müzikleri gösterir. MeloTR henüz internetten müzik indirmez.',
+            'Bu bölüm indirilenleri ve Müzik/MeloTR klasöründeki MP3 dosyalarını gösterir. Doğrudan dosya indirme desteklenir.',
             style: TextStyle(color: _muted, fontSize: 12, height: 1.45)))]))),
       if (downloads.isEmpty)
         const SliverToBoxAdapter(child: EmptyState(icon: Icons.download_for_offline_outlined,
@@ -794,7 +825,7 @@ class SettingsPage extends StatelessWidget {
       onTap: library.loading ? null : () => unawaited(library.refresh())),
     const SectionHeading(title: 'Uygulama', icon: Icons.info_outline_rounded),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
-      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.0 • Offline müzik çalar',
+      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.2 • MP3 dönüştürme',
         style: TextStyle(color: _muted))),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
       title: Text('Gizlilik'), subtitle: Text('Üyelik ve sunucu yok. Favoriler ve listeler cihazında saklanır.',
