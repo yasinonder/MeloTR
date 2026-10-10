@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:melotube/providers/content_provider.dart';
 import 'package:melotube/ui/animations/animated_icon.dart';
@@ -80,7 +79,7 @@ class _SearchSuggestionsState extends State<SearchSuggestions> {
                   height: 40,
                   child: AppAnimatedIcon(
                     suggestionsList.contains(item)
-                      ? Ionicons.search_outline
+                      ? Icons.search
                       : EvaIcons.clockOutline,
                     size: 20,
                   ),
