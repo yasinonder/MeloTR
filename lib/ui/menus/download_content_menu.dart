@@ -86,7 +86,7 @@ class _DownloadContentMenuState extends State<DownloadContentMenu> {
                   child: video != null ? Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _optionTile(context, title: Languages.of(context)!.labelMusic, subtitle: Languages.of(context)!.labelMusicDownloadDescription, icon: Icons.music_notes_outline, onTap: () {
+                      _optionTile(context, title: Languages.of(context)!.labelMusic, subtitle: Languages.of(context)!.labelMusicDownloadDescription, icon: Icons.music_note_outlined, onTap: () {
                         // Open Music Download Menu
                         Navigator.pop(context);
                         UiUtils.showModal(
