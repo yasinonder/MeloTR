@@ -7,6 +7,8 @@ import 'music_library.dart';
 import 'youtube_music_service.dart';
 import 'download_control.dart';
 import 'audio_data_profile.dart';
+import 'audio_stream_diagnostics.dart';
+import 'newpipe_audio_service.dart';
 
 class YoutubeMusicSearch extends StatefulWidget {
   const YoutubeMusicSearch({super.key, required this.library});
@@ -18,6 +20,7 @@ class YoutubeMusicSearch extends StatefulWidget {
 class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   final field = TextEditingController();
   final service = YoutubeMusicService();
+  final newPipeService = NewPipeAudioService();
   List<Video> results = <Video>[];
   bool searching = false;
   bool downloading = false;
@@ -26,6 +29,7 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   String status = '';
   double? progress;
   AudioDataProfile profile = AudioDataProfile.balanced;
+  bool newPipeEngine = true;
   Video? lastAttempt;
   DownloadControl? activeDownload;
   bool cancelling = false;
@@ -65,22 +69,35 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
       progress = null;
     });
     try {
-      final filename = await service.saveMp3(video,
-        cancellation: control,
-        profile: profile,
-        onStatus: (message) {
-          if (mounted) setState(() => status = message);
-        },
-        onProgress: (value) {
-          if (!mounted) return;
-          final now = DateTime.now();
-          if (value >= 1.0 ||
-              now.difference(lastProgressUi).inMilliseconds >= 350) {
-            lastProgressUi = now;
-            setState(() => progress = value);
-          }
-        },
-      );
+      final void Function(String) report = (message) {
+        if (mounted) setState(() => status = message);
+      };
+      final void Function(double) reportProgress = (value) {
+        if (!mounted) return;
+        final now = DateTime.now();
+        if (value >= 1.0 ||
+            now.difference(lastProgressUi).inMilliseconds >= 350) {
+          lastProgressUi = now;
+          setState(() => progress = value);
+        }
+      };
+      final filename = newPipeEngine
+          ? await newPipeService.saveMp3(
+              videoId: video.id.value,
+              title: video.title,
+              duration: video.duration,
+              profile: profile,
+              cancellation: control,
+              onStatus: report,
+              onProgress: reportProgress,
+            )
+          : await service.saveMp3(
+              video,
+              cancellation: control,
+              profile: profile,
+              onStatus: report,
+              onProgress: reportProgress,
+            );
       // The MP3 has already been persisted to MediaStore at this point.
       // A slow media permission query must not leave the download UI spinning.
       var refreshed = true;
@@ -100,6 +117,12 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
       if (mounted) setState(() {
         status = 'İndirme iptal edildi. Geçici dosya temizlendi.';
         error = null;
+        progress = null;
+      });
+    } on AudioAccessDenied catch (e) {
+      if (mounted) setState(() {
+        error = e.userMessage;
+        status = '2/4 · Erişim reddedildi, indirme durduruldu.';
         progress = null;
       });
     } catch (e) {
@@ -174,6 +197,24 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
           profile.outputMp3Kbps.toString() + ' kbps · İndirme sınırı: ' +
           profile.downloadLimitMegabytes.toString() + ' MB',
           style: const TextStyle(fontSize: 11, color: Colors.white70)),
+    ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(19, 0, 19, 6),
+      child: Row(children: [
+        const Text('Motor:', style: TextStyle(fontSize: 12)),
+        const SizedBox(width: 12),
+        DropdownButton<bool>(
+          value: newPipeEngine,
+          items: const [
+            DropdownMenuItem(value: true,
+              child: Text('NewPipe (deneme)')),
+            DropdownMenuItem(value: false,
+              child: Text('Eski motor')),
+          ],
+          onChanged: downloading ? null : (value) {
+            if (value != null) setState(() => newPipeEngine = value);
+          }),
+      ]),
     ),
     const Padding(
       padding: EdgeInsets.fromLTRB(19, 0, 19, 10),
