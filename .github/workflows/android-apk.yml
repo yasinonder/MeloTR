@@ -25,6 +25,8 @@ jobs:
           test -s lib/signed_audio_transfer.dart
           test -s test/signed_audio_transfer_test.dart
           test -s test/audio_stream_diagnostics_test.dart
+          test -s lib/newpipe_audio_service.dart
+          test -s test/newpipe_audio_service_test.dart
           test -s lib/audio_data_profile.dart
           test -s test/audio_data_profile_test.dart
           test -s lib/youtube_music_page.dart
@@ -64,7 +66,7 @@ jobs:
           PY
       - name: Check new import sources
         run: |
-          dart format --output=none --set-exit-if-changed lib/mp3_import_service.dart lib/mp3_import_tools.dart lib/youtube_music_service.dart lib/youtube_music_page.dart lib/download_control.dart lib/audio_stream_diagnostics.dart lib/signed_audio_transfer.dart || true
+          dart format --output=none --set-exit-if-changed lib/mp3_import_service.dart lib/mp3_import_tools.dart lib/youtube_music_service.dart lib/youtube_music_page.dart lib/download_control.dart lib/audio_stream_diagnostics.dart lib/signed_audio_transfer.dart lib/newpipe_audio_service.dart || true
           flutter analyze --no-fatal-infos
       - name: Test Flutter code
         run: flutter test
@@ -78,11 +80,11 @@ jobs:
           apk="build/app/outputs/flutter-apk/app-release.apk"
           test -s "$apk"
           ls -lh "$apk"
-          if gh release view v0.1.9 >/dev/null 2>&1; then
-            gh release upload v0.1.9 "$apk#MeloTR-v0.1.9.apk" --clobber
+          if gh release view v0.2.0 >/dev/null 2>&1; then
+            gh release upload v0.2.0 "$apk#MeloTR-v0.2.0.apk" --clobber
           else
-            gh release create v0.1.9 "$apk#MeloTR-v0.1.9.apk" \
+            gh release create v0.2.0 "$apk#MeloTR-v0.2.0.apk" \
               --target "$GITHUB_SHA" \
-              --title "MeloTR v0.1.9" \
+              --title "MeloTR v0.2.0" \
               --notes "Android universal release APK. Telefonunuza indirip yükleyebilirsiniz."
           fi
