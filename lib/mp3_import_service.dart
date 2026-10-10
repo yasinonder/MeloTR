@@ -7,6 +7,8 @@ import 'package:ffmpeg_kit_flutter_new_audio/return_code.dart';
 import 'package:media_store_plus/media_store_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'download_control.dart';
+
 /// Converts authorized local or directly downloadable media to an MP3.
 /// Never deletes user originals, and only deletes its temporary input after
 /// Android confirms the new MP3 has been written to its MediaStore.
@@ -22,6 +24,7 @@ class Mp3ImportService {
     required String title,
     required int kbps,
     required void Function(String) onStatus,
+    DownloadControl? cancellation,
   }) async {
     if (!await mediaFile.exists()) {
       throw const FormatException('Geçici ses dosyası bulunamadı.');
@@ -32,6 +35,7 @@ class Mp3ImportService {
       title: title,
       kbps: kbps,
       onStatus: onStatus,
+      cancellation: cancellation,
     );
   }
 
@@ -114,7 +118,9 @@ class Mp3ImportService {
     required String title,
     required int kbps,
     required void Function(String) onStatus,
+    DownloadControl? cancellation,
   }) async {
+    cancellation?.check();
     if (![128, 192, 256, 320].contains(kbps)) {
       throw const FormatException('Geçersiz MP3 kalitesi.');
     }
@@ -122,7 +128,9 @@ class Mp3ImportService {
         DateTime.now().millisecondsSinceEpoch.toString() + '.mp3';
     final output = File(folder.path + '/' + name);
     onStatus('3/4 · FFmpeg ile MP3 oluşturuluyor…');
-    final session = await FFmpegKit.executeWithArguments([
+    // A cancel request interrupts the native encoder as well.
+    cancellation?.registerStop(() => FFmpegKit.cancel());
+    final encodeFuture = FFmpegKit.executeWithArguments([
       '-hide_banner', '-nostdin', '-y',
       '-i', input.path, '-vn', '-map', '0:a:0',
       '-codec:a', 'libmp3lame', '-b:a', kbps.toString() + 'k',
@@ -130,16 +138,26 @@ class Mp3ImportService {
     ]).timeout(
       const Duration(minutes:3),
       onTimeout: () async {
-        // Cancel native FFmpeg instead of leaving a conversion running.
         await FFmpegKit.cancel().timeout(const Duration(seconds:8));
         throw TimeoutException('MP3 dönüştürme 3 dakikada tamamlanamadı.');
       },
     );
+    final session;
+    try {
+      session = cancellation == null
+          ? await encodeFuture
+          : await cancellation.untilCancelled(encodeFuture);
+      cancellation?.check();
+    } finally {
+      cancellation?.registerStop(null);
+    }
     if (!ReturnCode.isSuccess(await session.getReturnCode()) ||
         !await output.exists() || await output.length() < 1024) {
       throw const FormatException(
         'MP3 dönüştürülemedi; geçici video korunuyor.');
     }
+    // Final MediaStore write must finish atomically, without user cancellation.
+    cancellation?.startFinalizing();
     onStatus('4/4 · MP3 müzik kütüphanesine yazılıyor…');
     final store = MediaStore();
     final saved = await store.saveFile(

@@ -5,6 +5,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'music_library.dart';
 import 'youtube_music_service.dart';
+import 'download_control.dart';
 
 class YoutubeMusicSearch extends StatefulWidget {
   const YoutubeMusicSearch({super.key, required this.library});
@@ -25,6 +26,8 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   double? progress;
   int kbps = 192;
   Video? lastAttempt;
+  DownloadControl? activeDownload;
+  bool cancelling = false;
   DateTime lastProgressUi = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
@@ -49,7 +52,10 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
 
   Future<void> selectVideo(Video video) async {
     if (searching || downloading) return;
+    final control = DownloadControl();
     setState(() {
+      activeDownload = control;
+      cancelling = false;
       lastAttempt = video;
       selectedVideo = video.id.value;
       downloading = true;
@@ -59,6 +65,7 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
     });
     try {
       final filename = await service.saveMp3(video,
+        cancellation: control,
         kbps: kbps,
         onStatus: (message) {
           if (mounted) setState(() => status = message);
@@ -88,6 +95,12 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(status)));
       }
+    } on DownloadCancelled {
+      if (mounted) setState(() {
+        status = 'İndirme iptal edildi. Geçici dosya temizlendi.';
+        error = null;
+        progress = null;
+      });
     } catch (e) {
       if (mounted) setState(() {
         error = e is TimeoutException
@@ -100,6 +113,8 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
       if (mounted) setState(() {
         selectedVideo = null;
         downloading = false;
+        activeDownload = null;
+        cancelling = false;
       });
     }
   }
@@ -171,6 +186,26 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
               Text('${(progress! * 100).round()}%',
                   style: const TextStyle(fontSize: 12)),
           ]),
+          if (downloading)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: cancelling || activeDownload == null ||
+                    activeDownload!.isFinalizing
+                  ? null : () {
+                    final control = activeDownload!;
+                    setState(() {
+                      cancelling = true;
+                      status = 'İndirme iptal ediliyor…';
+                    });
+                    unawaited(control.cancel());
+                  },
+                icon: const Icon(Icons.close_rounded),
+                label: Text(cancelling ? 'İptal ediliyor' :
+                    activeDownload?.isFinalizing == true
+                        ? 'MP3 kaydediliyor' : 'İndirmeyi iptal et'),
+              ),
+            ),
         ]),
       ),
     if (error != null)

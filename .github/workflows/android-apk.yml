@@ -22,6 +22,8 @@ jobs:
           test -s lib/mp3_import_tools.dart
           test -s lib/youtube_music_service.dart
           test -s lib/youtube_music_page.dart
+          test -s lib/download_control.dart
+          test -s test/download_control_test.dart
           test -f assets/icons/placeholder.png
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -56,7 +58,7 @@ jobs:
           PY
       - name: Check new import sources
         run: |
-          dart format --output=none --set-exit-if-changed lib/mp3_import_service.dart lib/mp3_import_tools.dart lib/youtube_music_service.dart lib/youtube_music_page.dart || true
+          dart format --output=none --set-exit-if-changed lib/mp3_import_service.dart lib/mp3_import_tools.dart lib/youtube_music_service.dart lib/youtube_music_page.dart lib/download_control.dart || true
           flutter analyze --no-fatal-infos
       - name: Test Flutter code
         run: flutter test
@@ -70,11 +72,11 @@ jobs:
           apk="build/app/outputs/flutter-apk/app-release.apk"
           test -s "$apk"
           ls -lh "$apk"
-          if gh release view v0.1.4 >/dev/null 2>&1; then
-            gh release upload v0.1.4 "$apk#MeloTR-v0.1.4.apk" --clobber
+          if gh release view v0.1.5 >/dev/null 2>&1; then
+            gh release upload v0.1.5 "$apk#MeloTR-v0.1.5.apk" --clobber
           else
-            gh release create v0.1.4 "$apk#MeloTR-v0.1.4.apk" \
+            gh release create v0.1.5 "$apk#MeloTR-v0.1.5.apk" \
               --target "$GITHUB_SHA" \
-              --title "MeloTR v0.1.4" \
+              --title "MeloTR v0.1.5" \
               --notes "Android universal release APK. Telefonunuza indirip yükleyebilirsiniz."
           fi

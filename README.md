@@ -116,3 +116,13 @@ Zaman aşımında hata ve tekrar deneme düğmesi görünür; kullanıcı sonsuz
 yükleme ekranında kalmaz. MP3 kaydı tamamlanmışsa, medya taramasının gecikmesi
 başarı durumunu engellemez. YouTube erişimi ve gerçek indirme başarısı,
 YouTube tarafından sınırlanabilir; cihaz üzerinde ayrıca denenmelidir.
+
+## v0.1.5 – İndirilmeyi iptal et
+
+YouTube indirmesi sırasında **İndirmeyi iptal et** düğmesi gösterilir.
+Buton bağlantı/akış beklemelerini ve aktif ses aktarımını iptal eder;
+FFmpeg dönüştürme başlamışsa dönüşümü de durdurmayı dener.
+Kullanıcı iptalinde uygulamaya ait eksik/geçici dosyalar temizlenir;
+telefondan önceden seçilen orijinal videolara dokunulmaz.
+Android MediaStore'a MP3 kaydetme son aşamasında kayıt bütünlüğü için
+iptal devre dışı kalır. İptal davranışı için otomatik testler eklendi.
