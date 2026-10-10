@@ -6,6 +6,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'download_control.dart';
 import 'audio_stream_diagnostics.dart';
+import 'signed_audio_transfer.dart';
 import 'audio_data_profile.dart';
 import 'mp3_import_service.dart';
 
@@ -179,6 +180,46 @@ class YoutubeMusicService {
               diagnoseAudioStream(streamInfo.url));
             cancellation.check();
             failure = FormatException(e.toString() + ' | ' + check.detail);
+            // A 200/206 Range probe confirms an HTTP response. Try a direct
+            // bounded, cancellable download of the *existing* signed audio
+            // URL instead of repeating the stalled third-party stream reader.
+            if (check.statusCode == 200 || check.statusCode == 206) {
+              onStatus('2/4 · Akış ' + attemptLabel +
+                  ' · Alternatif HTTP aktarımı başlıyor…');
+              try {
+                final httpBytes = await SignedAudioTransfer().download(
+                  uri: streamInfo.url,
+                  destination: input,
+                  cancellation: cancellation,
+                  byteLimit: profile.downloadLimitBytes - totalDownloadedBytes,
+                  expectedBytes: streamInfo.size.totalBytes,
+                  onUpdate: (amount, expected) {
+                    final mb = (amount / (1024 * 1024)).toStringAsFixed(2);
+                    onStatus('2/4 · Alternatif HTTP · ' + mb + ' MB indirildi');
+                    if (expected != null && expected > 0) {
+                      onProgress((amount / expected).clamp(0.0, 1.0));
+                    }
+                  },
+                );
+                totalDownloadedBytes += httpBytes;
+                received = httpBytes;
+                onStatus('2/4 · HTTP aktarımı tamamlandı, MP3 hazırlanıyor…');
+                onProgress(1.0);
+                return await _converter.fromAppTemporaryMedia(
+                  mediaFile: input,
+                  title: video.title,
+                  kbps: profile.outputMp3Kbps,
+                  onStatus: onStatus,
+                  cancellation: cancellation,
+                );
+              } on DownloadCancelled {
+                rethrow;
+              } catch (httpError) {
+                failure = FormatException(
+                    'Kütüphane aktarımı: ' + e.toString() +
+                    ' | Doğrudan HTTP aktarımı: ' + httpError.toString());
+              }
+            }
             if (check.accessBlocked) {
               // Alternative bitrates on the same origin often share the block.
               // Do not burn more data/requests without user action.

@@ -164,3 +164,20 @@ kısıtlı erişim açıkça bildirilir; başka kaliteyi indirmeye çalışarak 
 veri harcanmaz. Diğer durumlarda alternatif akış denemesi korunur. Tanı
 isteği, asıl indirme isteğiyle aynı başlıkları kullanmadığından kesin teşhis
 olmayabilir. YouTube kısıtları bu değişiklikle aşılmaz. İptal düğmesi korunur.
+
+
+## v0.1.9 – Alternatif HTTP ses aktarımı
+
+Önceki youtube_explode_dart akış okuyucusu %0 kalırsa uygulama, yetkili
+HTTPS Googlevideo ses adresini HTTP Range (206) ile tanılar. Tanı 200/206
+döndürürse aynı imzalı ses adresinden Flutter/Dart HttpClient ile en fazla
+4 MB'lik sıralı parçalarda, diske akış halinde alternatif aktarım denenir.
+Adres kapsamı, toplam 20/40/60 MB veri limitleri, 3 dakikalık toplam aktarım
+sınırı, bağlantı ve paket zaman aşımları, kullanıcı iptal düğmesi korunur.
+Aktarım eksikse MP3 dönüştürme başlamaz. Başarılı MP3 doğrulaması olmadan
+geçici orijinal kopya silinmez. Başarılı kayıt sonrası uygulama temp dosyalarını
+temizler. İndirme testi üzerinde Android gerçek cihaz doğrulaması gerekir.
+
+Bu mekanizma YouTube erişim denetimlerini aşmaz. Yalnızca içeriği indirmeye
+yetkili kullanıcılar için tasarlanmıştır. Y2Mate/YTMP3'in kapalı sunucu API'ları
+kullanılmamış veya ürünün içine gizlice entegre edilmemiştir.
