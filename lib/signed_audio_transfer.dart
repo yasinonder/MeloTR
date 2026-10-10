@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'download_control.dart';
+import 'audio_stream_diagnostics.dart';
 
 /// Alternative HTTP transport for an already discovered, signed HTTPS
 /// Googlevideo audio URL. No scraping, tokens, cookies, or access bypass.
@@ -96,9 +97,7 @@ class SignedAudioTransfer {
         if (response.statusCode == 401 ||
             response.statusCode == 403 ||
             response.statusCode == 429) {
-          throw HttpException(
-              'Ses sunucusu HTTP ' + response.statusCode.toString() +
-              ' erişim kısıtı uyguladı.');
+          throw AudioAccessDenied(response.statusCode);
         }
         if (response.statusCode != 206 &&
             !(response.statusCode == 200 && downloaded == 0)) {
