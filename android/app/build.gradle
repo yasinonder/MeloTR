@@ -1,0 +1,84 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.melotube.player"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    defaultConfig {
+        applicationId "com.melotube.player"
+        // Was 22. Flutter 3.41 requires a minimum of 24, so Android 5.1 / 6.0 are
+        // no longer supported targets.
+        minSdk flutter.minSdkVersion
+        resValue "string", "app_name", "MeloTube"
+        // Deliberately pinned to the previous value rather than
+        // flutter.targetSdkVersion (36). Raising targetSdk opts the app into
+        // Android 15/16 runtime behaviour -- most visibly forced edge-to-edge,
+        // which this app's layouts are not written for. Bump it as its own
+        // change, with UI work, not as a side effect of upgrading packages.
+        // Note: Google Play raises its required targetSdk annually, so this
+        // cannot stay at 34 indefinitely.
+        targetSdk 34
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        // Enabling multidex support.
+        multiDexEnabled true
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // ndk {
+            //    abiFilters 'armeabi-v7a', 'arm64-v8a'
+            // }
+        }
+        debug {
+            applicationIdSuffix ".dev"
+            resValue "string", "app_name", "MeloTube Dev"
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation 'androidx.window:window:1.0.0'
+    implementation 'androidx.window:window-java:1.0.0'
+    // 2.x is required by AGP 8 / compileSdk 36 toolchains.
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}
