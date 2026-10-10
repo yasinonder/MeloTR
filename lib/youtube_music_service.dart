@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'download_control.dart';
+import 'audio_stream_diagnostics.dart';
 import 'audio_data_profile.dart';
 import 'mp3_import_service.dart';
 
@@ -107,14 +108,18 @@ class YoutubeMusicService {
           try {
             final bytesStream = _youtube.videos.streams.get(streamInfo)
                 .timeout(
-              const Duration(seconds:18),
+              const Duration(seconds:12),
               onTimeout: (events) => events.addError(
-                TimeoutException('18 saniyedir ses verisi alınamadı')),
+                TimeoutException('12 saniyedir ilk ses verisi alınamadı')),
             );
             final iterator = StreamIterator<List<int>>(bytesStream);
             cancellation.registerStop(() => iterator.cancel());
             try {
-              while (await cancellation.untilCancelled(iterator.moveNext())) {
+              while (await cancellation.untilCancelled(
+                  iterator.moveNext().timeout(const Duration(seconds:14),
+                    onTimeout: () => throw TimeoutException(
+                      '14 saniyedir sunucudan ses paketi alınamadı')),
+                )) {
                 cancellation.check();
                 if (DateTime.now().difference(began) >
                     const Duration(minutes:2)) {
@@ -164,6 +169,22 @@ class YoutubeMusicService {
         } on DownloadCancelled {
           rethrow;
         } catch (e) {
+          Object failure = e;
+          if (received == 0) {
+            // An independent Range request reveals common HTTP access errors.
+            // The original library exception may hide the actual status.
+            onStatus('2/4 · Akış ' + attemptLabel +
+                ' · %0: HTTP erişimi kontrol ediliyor…');
+            final check = await cancellation.untilCancelled(
+              diagnoseAudioStream(streamInfo.url));
+            cancellation.check();
+            failure = FormatException(e.toString() + ' | ' + check.detail);
+            if (check.accessBlocked) {
+              // Alternative bitrates on the same origin often share the block.
+              // Do not burn more data/requests without user action.
+              throw failure;
+            }
+          }
           // Do not waste mobile data by downloading another full source
           // after substantial bytes have already been received.
           if (received >= 256 * 1024 ||
@@ -175,7 +196,7 @@ class YoutubeMusicService {
                 ' MB kullanıldı. Aynı medya tekrar indirilmedi. ' +
                 'Son hata: ' + e.toString());
           }
-          lastFailure = e;
+          lastFailure = failure;
           onStatus('2/4 · Akış ' + attemptLabel +
               ' erişilemedi. Düşük veri kaybıyla alternatif deneniyor…');
           // An incomplete file has no usable audio; remove just this copy.

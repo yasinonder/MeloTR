@@ -153,3 +153,14 @@ gerçek ses ayrıntılarını artırmaz.
 
 Bu değişiklik medya sunucusu kısıtlarını aşma garantisi vermez; yalnızca
 erişilebilen, kaydetme hakkı bulunan içeriklerin veri tüketimini düzenler.
+
+## v0.1.8 – 2/4 akış %0 erişim tanısı
+
+Ses aktarımı 12–14 saniye boyunca sıfır baytta kalırsa indirme işlevi
+zaman aşımına uğrar. Yalnızca Googlevideo ses adresine en fazla bir bayt
+isteyen, 6 saniyelik HTTP durum kodu tanı isteği yapılır. HTTP 401/403
+veya 429 görülürse (ayrıca orijinal hata metniyle birlikte) kullanıcıya
+kısıtlı erişim açıkça bildirilir; başka kaliteyi indirmeye çalışarak mobil
+veri harcanmaz. Diğer durumlarda alternatif akış denemesi korunur. Tanı
+isteği, asıl indirme isteğiyle aynı başlıkları kullanmadığından kesin teşhis
+olmayabilir. YouTube kısıtları bu değişiklikle aşılmaz. İptal düğmesi korunur.
