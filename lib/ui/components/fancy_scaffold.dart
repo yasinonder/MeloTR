@@ -5,7 +5,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter_bounce/flutter_bounce.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:melotube/internal/global.dart';
 import 'package:melotube/providers/app_settings.dart';
@@ -381,9 +380,9 @@ class FancyScaffoldState extends State<FancyScaffold> with TickerProviderStateMi
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
                           child: uiProvider.currentPlayer == CurrentPlayer.video
-                            ? Icon(Ionicons.musical_note,
+                            ? Icon(Icons.music_note,
                                 size: Tween<double>(begin: 18, end: 0).animate(floatingWidgetAnimationController).value)
-                            : Icon(Ionicons.logo_youtube,
+                            : Icon(Icons.play_circle_outline,
                                 size: Tween<double>(begin: 18, end: 0).animate(floatingWidgetAnimationController).value)
                         ),
                       ),
