@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -120,27 +121,35 @@ class Mp3ImportService {
     final name = _safeName(title) + '-' +
         DateTime.now().millisecondsSinceEpoch.toString() + '.mp3';
     final output = File(folder.path + '/' + name);
-    onStatus('FFmpeg ile MP3 dönüştürülüyor…');
+    onStatus('3/4 · FFmpeg ile MP3 oluşturuluyor…');
     final session = await FFmpegKit.executeWithArguments([
       '-hide_banner', '-nostdin', '-y',
       '-i', input.path, '-vn', '-map', '0:a:0',
       '-codec:a', 'libmp3lame', '-b:a', kbps.toString() + 'k',
       '-id3v2_version', '3', output.path,
-    ]);
+    ]).timeout(
+      const Duration(minutes:3),
+      onTimeout: () async {
+        // Cancel native FFmpeg instead of leaving a conversion running.
+        await FFmpegKit.cancel().timeout(const Duration(seconds:8));
+        throw TimeoutException('MP3 dönüştürme 3 dakikada tamamlanamadı.');
+      },
+    );
     if (!ReturnCode.isSuccess(await session.getReturnCode()) ||
         !await output.exists() || await output.length() < 1024) {
       throw const FormatException(
         'MP3 dönüştürülemedi; geçici video korunuyor.');
     }
-    onStatus('Müzik/MeloTR klasörüne kaydediliyor…');
+    onStatus('4/4 · MP3 müzik kütüphanesine yazılıyor…');
     final store = MediaStore();
     final saved = await store.saveFile(
       tempFilePath: output.path,
       dirType: DirType.audio,
       dirName: DirName.music,
-    );
+    ).timeout(const Duration(seconds:45));
     if (saved == null ||
-        !await store.isFileUriExist(uriString: saved.uri.toString())) {
+        !await store.isFileUriExist(uriString: saved.uri.toString())
+            .timeout(const Duration(seconds:20))) {
       throw const FileSystemException(
         'MP3 kaydı doğrulanamadı; geçici video korunuyor.');
     }

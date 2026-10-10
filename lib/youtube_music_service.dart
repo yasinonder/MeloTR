@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
@@ -27,10 +28,12 @@ class YoutubeMusicService {
     if (trimmed.isEmpty) return <Video>[];
     final id = videoIdFromInput(trimmed);
     if (id != null) {
-      final video = await _youtube.videos.get(id);
+      final video = await _youtube.videos.get(id)
+          .timeout(const Duration(seconds:25));
       return <Video>[video];
     }
-    final results = await _youtube.search.search(trimmed);
+    final results = await _youtube.search.search(trimmed)
+        .timeout(const Duration(seconds:25));
     return results.toList(growable: false);
   }
 
@@ -40,8 +43,16 @@ class YoutubeMusicService {
     required void Function(String) onStatus,
     required void Function(double) onProgress,
   }) async {
-    onStatus('Ses akışı hazırlanıyor…');
-    final manifest = await _youtube.videos.streams.getManifest(video.id);
+    onStatus('1/4 · YouTube ses bilgisi alınıyor…');
+    // Manifest requests can hang or be blocked by YouTube.
+    final manifest = await _youtube.videos.streams.getManifest(video.id)
+        .timeout(
+          const Duration(seconds:35),
+          onTimeout: () => throw TimeoutException(
+            'YouTube ses bilgisine 35 saniyede yanıt vermedi. '
+            'Başka bir video veya bağlantı deneyin.',
+          ),
+        );
     if (manifest.audioOnly.isEmpty) {
       throw const FormatException('Bu video için indirilebilir ses bulunamadı.');
     }
@@ -51,18 +62,47 @@ class YoutubeMusicService {
         DateTime.now().microsecondsSinceEpoch.toString());
     await work.create(recursive: true);
     final input = File(work.path + '/source.' + info.container.name);
-    onStatus('Ses indiriliyor…');
+    onStatus('2/4 · Ses akışı indiriliyor…');
     final sink = input.openWrite();
+    final started = DateTime.now();
+    var lastUiTick = DateTime.fromMillisecondsSinceEpoch(0);
     int received = 0;
     try {
-      await for (final bytes in _youtube.videos.streams.get(info)) {
-        sink.add(bytes);
+      // No bytes for 25s => fail visibly instead of showing a spinner forever.
+      // An absolute 5-minute limit also prevents slow endless transfers.
+      final bytesStream = _youtube.videos.streams.get(info).timeout(
+        const Duration(seconds:25),
+        onTimeout: (sink) => sink.addError(TimeoutException(
+          'YouTube ses verisi 25 saniyedir gelmiyor. '
+          'Bağlantı veya video erişimi engellenmiş olabilir.',
+        )),
+      );
+      await for (final bytes in bytesStream) {
+        if (DateTime.now().difference(started) >
+            const Duration(minutes:5)) {
+          throw TimeoutException('İndirme 5 dakikayı geçti ve durduruldu.');
+        }
         received += bytes.length;
-        if (info.size.totalBytes > 0) {
-          onProgress((received / info.size.totalBytes).clamp(0.0, 1.0));
+        if (received > 180 * 1024 * 1024) {
+          throw const FormatException('Ses verisi beklenenden büyük; işlem durduruldu.');
+        }
+        sink.add(bytes);
+        final now = DateTime.now();
+        if (now.difference(lastUiTick).inMilliseconds >= 400 ||
+            (info.size.totalBytes > 0 && received >= info.size.totalBytes)) {
+          lastUiTick = now;
+          final mb = (received / (1024 * 1024)).toStringAsFixed(1);
+          onStatus('2/4 · Ses indiriliyor: $mb MB');
+          if (info.size.totalBytes > 0) {
+            onProgress((received / info.size.totalBytes).clamp(0.0, 1.0));
+          }
         }
       }
       await sink.flush();
+    } on TimeoutException {
+      rethrow;
+    } on SocketException catch (e) {
+      throw FormatException('YouTube bağlantısı kesildi: ${e.message}');
     } finally {
       await sink.close();
     }

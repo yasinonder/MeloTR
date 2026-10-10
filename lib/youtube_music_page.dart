@@ -24,6 +24,8 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   String status = '';
   double? progress;
   int kbps = 192;
+  Video? lastAttempt;
+  DateTime lastProgressUi = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void dispose() {
@@ -48,6 +50,7 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   Future<void> selectVideo(Video video) async {
     if (searching || downloading) return;
     setState(() {
+      lastAttempt = video;
       selectedVideo = video.id.value;
       downloading = true;
       error = null;
@@ -61,17 +64,38 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
           if (mounted) setState(() => status = message);
         },
         onProgress: (value) {
-          if (mounted) setState(() => progress = value);
+          if (!mounted) return;
+          final now = DateTime.now();
+          if (value >= 1.0 ||
+              now.difference(lastProgressUi).inMilliseconds >= 350) {
+            lastProgressUi = now;
+            setState(() => progress = value);
+          }
         },
       );
-      await widget.library.refresh();
+      // The MP3 has already been persisted to MediaStore at this point.
+      // A slow media permission query must not leave the download UI spinning.
+      var refreshed = true;
+      try {
+        await widget.library.refresh().timeout(const Duration(seconds:20));
+      } on TimeoutException {
+        refreshed = false;
+      }
       if (mounted) {
-        setState(() => status = filename + ' kütüphaneye eklendi.');
+        setState(() => status = refreshed
+            ? filename + ' kütüphaneye eklendi.'
+            : filename + ' kaydedildi. Kütüphaneyi yeniden tarayın.');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('MP3 kütüphaneye eklendi: ' + filename)));
+          SnackBar(content: Text(status)));
       }
     } catch (e) {
-      if (mounted) setState(() => error = 'MP3 indirme/dönüştürme hatası: $e');
+      if (mounted) setState(() {
+        error = e is TimeoutException
+            ? 'İndirme yanıt vermedi: ${e.message ?? e.toString()}'
+            : 'MP3 indirme/dönüştürme hatası: $e';
+        status = 'İşlem durduruldu; başka bir video deneyin.';
+        progress = null;
+      });
     } finally {
       if (mounted) setState(() {
         selectedVideo = null;
@@ -139,15 +163,29 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
         child: Column(children: [
           if (downloading) LinearProgressIndicator(value: progress),
           const SizedBox(height: 5),
-          Text(status, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12)),
+          Row(children: [
+            Expanded(child: Text(status, maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12))),
+            if (downloading && progress != null)
+              Text('${(progress! * 100).round()}%',
+                  style: const TextStyle(fontSize: 12)),
+          ]),
         ]),
       ),
     if (error != null)
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        child: Text(error!,
-            style: const TextStyle(fontSize: 12, color: Colors.redAccent)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(error!, style: const TextStyle(
+              fontSize: 12, color: Colors.redAccent)),
+          if (lastAttempt != null && !downloading)
+            TextButton.icon(
+              onPressed: () => unawaited(selectVideo(lastAttempt!)),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Tekrar dene'),
+            ),
+        ]),
       ),
     if (searching)
       const Padding(padding: EdgeInsets.only(top: 25),

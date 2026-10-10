@@ -106,3 +106,13 @@ olan değişiklikler, erişim ve içerik kısıtlamaları veya Javascript doğru
 bazı içeriklerde bu deneysel yöntemi engelleyebilir. YouTube'un geliştirici
 politikaları, yazılı izin olmadan platform içeriklerinin indirilip çevrimdışı
 saklanmasına izin vermez. Yalnızca indirme yetkiniz olan içeriklerde kullanın.
+
+## v0.1.4 – YouTube'da sonsuz yükleme göstergesi düzeltmesi
+
+YouTube ses manifesti 35 saniye, indirme akışının iki veri paketi arası 25 saniye,
+tüm indirme 5 dakika, FFmpeg dönüştürmesi 3 dakika ve MediaStore kaydı 45 saniye
+ile sınırlandırıldı. Aşama durumları ve indirilen MB ile yüzde gösteriliyor.
+Zaman aşımında hata ve tekrar deneme düğmesi görünür; kullanıcı sonsuz dönen
+yükleme ekranında kalmaz. MP3 kaydı tamamlanmışsa, medya taramasının gecikmesi
+başarı durumunu engellemez. YouTube erişimi ve gerçek indirme başarısı,
+YouTube tarafından sınırlanabilir; cihaz üzerinde ayrıca denenmelidir.
