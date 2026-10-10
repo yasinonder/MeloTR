@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bounce/flutter_bounce.dart';
 import 'package:image_fade/image_fade.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:melotube/internal/album_utils.dart';
 import 'package:melotube/internal/artwork_manager.dart';
 import 'package:melotube/internal/models/media_item_models.dart';
@@ -122,7 +121,7 @@ class _AlbumCardTileState extends State<AlbumCardTile> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Icon(Ionicons.albums_outline, size: 16)
+                          const Icon(Icons.album, size: 16)
                         ],
                       ),
                     ),
