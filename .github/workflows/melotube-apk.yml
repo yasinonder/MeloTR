@@ -1,0 +1,123 @@
+name: MeloTube - SongTube Based Android APK
+
+on:
+  push:
+    branches: [melotube]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: melotube-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bootstrap-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - name: Checkout isolated MeloTube branch
+        uses: actions/checkout@v4
+        with:
+          ref: melotube
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter stable
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Prepare image tooling
+        run: python3 -m pip install --disable-pip-version-check pillow
+
+      - name: Import GPL SongTube sources once and apply MeloTube branding
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -s MELOTUBE_CHANGES.md; then
+            echo 'Existing MeloTube source detected. Skipping bootstrap import.'
+            exit 0
+          fi
+
+          checkout_root="$GITHUB_WORKSPACE"
+          preserved="$RUNNER_TEMP/melotube-protected"
+          upstream="$RUNNER_TEMP/songtube-upstream"
+          mkdir -p "$preserved/.github/workflows" "$preserved/tools"
+          cp .github/workflows/melotube-apk.yml "$preserved/.github/workflows/melotube-apk.yml"
+          cp tools/melotube_rebrand.py "$preserved/tools/melotube_rebrand.py"
+
+          git clone --depth 1 --branch development \
+            https://github.com/SongTube/SongTube-App.git "$upstream"
+          actual="$(git -C "$upstream" rev-parse HEAD)"
+          pinned="a6c51b6ab28cf566d048e7e8abff3367226afef1"
+          if [ "$actual" != "$pinned" ]; then
+            echo "::error::Upstream changed; review new commit before importing."
+            echo "Expected $pinned; received $actual"
+            exit 1
+          fi
+
+          git ls-files -z | xargs -0 -r rm -f
+          git clean -fdx
+          tar -C "$upstream" --exclude='./.git' -cf - . | tar -C "$checkout_root" -xf -
+          mkdir -p .github/workflows tools
+          cp "$preserved/.github/workflows/melotube-apk.yml" .github/workflows/
+          cp "$preserved/tools/melotube_rebrand.py" tools/
+          python3 tools/melotube_rebrand.py
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(melotube): import GPL SongTube base and apply independent branding"
+          git push origin HEAD:melotube
+          echo 'Imported editable MeloTube source on melotube branch.'
+
+      - name: Validate branding and licenses
+        run: |
+          set -euo pipefail
+          grep -Eq '^name: melotube$' pubspec.yaml
+          grep -Fq 'applicationId "com.melotube.player"' android/app/build.gradle
+          grep -Fq 'MeloTube' android/app/build.gradle
+          test -s MELOTUBE_CHANGES.md
+          test -s LICENSE
+          test -s assets/images/logo.png
+          test -s lib/main.dart
+
+      - name: Install Flutter packages
+        run: flutter pub get
+
+      - name: Check Dart analysis
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Build MeloTube release APK
+        run: flutter build apk --release --build-name=0.1.0 --build-number=1
+
+      - name: Publish MeloTube test APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk="build/app/outputs/flutter-apk/app-release.apk"
+          test -s "$apk"
+          cp "$apk" MeloTube-v0.1.0.apk
+          tag="melotube-v0.1.0"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" MeloTube-v0.1.0.apk --clobber
+          else
+            gh release create "$tag" MeloTube-v0.1.0.apk \
+              --target "$(git rev-parse HEAD)" \
+              --title "MeloTube v0.1.0 - Deneme" \
+              --prerelease \
+              --notes "GPL-3.0 SongTube-derived test build; rebranded as MeloTube. Signed with a development key. Source: melotube branch; see MELOTUBE_CHANGES.md."
+          fi
