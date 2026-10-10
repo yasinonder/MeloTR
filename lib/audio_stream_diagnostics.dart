@@ -1,6 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 
+/// HTTP status from an actual media download, not an MP3 conversion failure.
+class AudioAccessDenied implements Exception {
+  const AudioAccessDenied(this.statusCode);
+  final int statusCode;
+  String get userMessage => statusCode == 429
+      ? 'Ses sunucusu çok fazla istek nedeniyle erişimi kısıtladı (429).'
+      : 'Ses sunucusu HTTP $statusCode erişimini reddetti. '
+        'MP3 kalitesini değiştirmek erişim engelini çözmez.';
+  @override
+  String toString() => 'AudioAccessDenied($statusCode)';
+}
+
 /// A *diagnostic* HTTP Range request made only after an audio stream failed
 /// without receiving any bytes. Never probes user-supplied arbitrary hosts.
 class AudioStreamDiagnostic {
