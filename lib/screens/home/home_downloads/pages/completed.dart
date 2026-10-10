@@ -2,7 +2,6 @@ import 'package:audio_service/audio_service.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:melotube/internal/models/song_item.dart';
 import 'package:melotube/languages/languages.dart';
@@ -31,7 +30,7 @@ class _DownloadsCompletedPageState extends State<DownloadsCompletedPage> {
         ? Center(child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Ionicons.cloud_download_outline, size: 64),
+              const Icon(Icons.download_for_offline_outlined, size: 64),
               const SizedBox(height: 8),
               Text(Languages.of(context)!.labelNoDownloadsYet, style: textStyle(context)),
               Padding(
