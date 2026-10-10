@@ -150,7 +150,7 @@ class _SongTileState extends State<SongTile> {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: Icon(
-                      isFavorite ? Ionicons.heart : Ionicons.heart_outline,
+                      isFavorite ? Ionicons.heart : Icons.favorite_border,
                       key: ValueKey(widget.song.id+isFavorite.toString()),
                       color: isFavorite ? Colors.red : Theme.of(context).iconTheme.color!.withOpacity(0.2), size: 18)),
                 ),
