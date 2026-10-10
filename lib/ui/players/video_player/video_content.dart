@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:image_fade/image_fade.dart';
 import 'package:intl/intl.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:newpipeextractor_dart/extractors/comments.dart';
 import 'package:newpipeextractor_dart/extractors/videos.dart';
@@ -398,7 +397,7 @@ class _VideoPlayerContentState extends State<VideoPlayerContent> with TickerProv
           const SizedBox(width: 8),
           // Add to Playlist Button
           TextIconSlimButton(
-            icon: const AppAnimatedIcon(Ionicons.add_outline, size: 18),
+            icon: const AppAnimatedIcon(Icons.add, size: 18),
             text: Languages.of(context)!.labelPlaylist,
             onTap: () {
               UiUtils.showModal(
