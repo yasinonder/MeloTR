@@ -130,3 +130,26 @@ iptal devre dışı kalır. İptal davranışı için otomatik testler eklendi.
 ## v0.1.6 – YouTube ses akışında alternatif denemeler
 
 İndirme aşaması 2/4'te ses verisi alamazsa 18 saniyelik hareketsizlikten sonra başka bir ses kalitesi/biçimi otomatik denenir (en fazla üç akış). İndirilen MB ve kaçıncı akışın denendiği görüntülenir. Her akışın etkin aktarımı iki dakika ile sınırlıdır. Başarısız denemeler gerekçeli hata gösterir ve eksik geçici dosyaları temizler. Gerçek YouTube indirme başarısı, YouTube'un erişim kısıtlarına bağlıdır.
+
+
+## v0.1.7 — Mobil veri koruma ve MP3 kalitesi
+
+YouTube aramasında üç veri profili vardır. Varsayılan **Dengeli** profil,
+yaklaşık 96 kbps kaynak sesi hedefler (daha düşük veri transferi için
+verimli Opus akışlarını tercih eder). Ekonomik profil yaklaşık 64 kbps,
+Yüksek kalite profili yaklaşık 160 kbps kaynak sesi hedefler.
+Mevcut akışlar farklı olabileceğinden gerçek indirilen dosya değişebilir.
+Profil seçimi MP3 dosyasının kodlama bit hızını da ayrı belirler:
+Ekonomik 128 kbps MP3, Dengeli 160 kbps MP3, Yüksek 192 kbps MP3.
+
+Mobil data bütçeleri sırasıyla 20, 40, 60 MB ile sınırlıdır.
+Liste öğelerinde şarkı süresine dayalı *tahmini* ses verisi MB görünür.
+Akış metadatasında gerçek boyut varsa işlem sırasında gösterilir.
+Çok veri harcanmış başarısız bir aktarımın yeniden indirilmesi
+otomatik olarak engellenir (256 KB üzeri başarısızlık).
+Video görüntüleri indirilmez; yalnızca ses biçimleri seçilir.
+Düşük bit hızlı kaynaktan yüksek bit hızlı MP3'e dönüştürme
+gerçek ses ayrıntılarını artırmaz.
+
+Bu değişiklik medya sunucusu kısıtlarını aşma garantisi vermez; yalnızca
+erişilebilen, kaydetme hakkı bulunan içeriklerin veri tüketimini düzenler.

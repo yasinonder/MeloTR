@@ -6,6 +6,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'music_library.dart';
 import 'youtube_music_service.dart';
 import 'download_control.dart';
+import 'audio_data_profile.dart';
 
 class YoutubeMusicSearch extends StatefulWidget {
   const YoutubeMusicSearch({super.key, required this.library});
@@ -24,7 +25,7 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
   String? error;
   String status = '';
   double? progress;
-  int kbps = 192;
+  AudioDataProfile profile = AudioDataProfile.balanced;
   Video? lastAttempt;
   DownloadControl? activeDownload;
   bool cancelling = false;
@@ -66,7 +67,7 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
     try {
       final filename = await service.saveMp3(video,
         cancellation: control,
-        kbps: kbps,
+        profile: profile,
         onStatus: (message) {
           if (mounted) setState(() => status = message);
         },
@@ -150,20 +151,29 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
       child: Row(children: [
         const Icon(Icons.music_note, size: 18),
         const SizedBox(width: 8),
-        const Text('MP3 kalitesi'),
-        const SizedBox(width: 12),
-        DropdownButton<int>(
-          value: kbps,
-          items: [128, 192, 256, 320].map((rate) =>
-              DropdownMenuItem(value: rate, child: Text(rate.toString() + ' kbps'))).toList(),
+        const Text('Mobil veri'),
+        const SizedBox(width: 8),
+        DropdownButton<AudioDataProfile>(
+          value: profile,
+          items: AudioDataProfile.values.map((option) =>
+              DropdownMenuItem(
+                  value: option, child: Text(option.label))).toList(),
           onChanged: downloading ? null : (value) {
-            if (value != null) setState(() => kbps = value);
+            if (value != null) setState(() => profile = value);
           }),
         const Spacer(),
         if (results.isNotEmpty)
           Text(results.length.toString() + ' sonuç',
               style: const TextStyle(fontSize: 11, color: Colors.white54)),
       ]),
+    ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(19, 0, 19, 6),
+      child: Text('Hedef ses: ' +
+          profile.targetSourceKbps.toString() + ' kbps · MP3: ' +
+          profile.outputMp3Kbps.toString() + ' kbps · İndirme sınırı: ' +
+          profile.downloadLimitMegabytes.toString() + ' MB',
+          style: const TextStyle(fontSize: 11, color: Colors.white70)),
     ),
     const Padding(
       padding: EdgeInsets.fromLTRB(19, 0, 19, 10),
@@ -269,6 +279,12 @@ class _YoutubeMusicSearchState extends State<YoutubeMusicSearch> {
                           Text(duration(video.duration),
                             style: const TextStyle(
                               color: Colors.white54, fontSize: 11)),
+                          if (video.duration != null)
+                            Text('Tahmini ses verisi: ' +
+                                profile.estimatedMegaBytes(video.duration)
+                                    .toStringAsFixed(1) + ' MB',
+                              style: const TextStyle(
+                                color: Color(0xFF76DBCC), fontSize: 11)),
                         ],
                       )),
                       const SizedBox(width: 5),

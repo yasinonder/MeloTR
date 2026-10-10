@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'download_control.dart';
+import 'audio_data_profile.dart';
 import 'mp3_import_service.dart';
 
 /// Unofficial YouTube access; restrictions and availability may change.
@@ -40,7 +41,7 @@ class YoutubeMusicService {
 
   Future<String> saveMp3(
     Video video, {
-    required int kbps,
+    required AudioDataProfile profile,
     required void Function(String) onStatus,
     required void Function(double) onProgress,
     required DownloadControl cancellation,
@@ -62,12 +63,19 @@ class YoutubeMusicService {
       throw const FormatException('Bu video için indirilebilir ses bulunamadı.');
     }
     // If one stream is rejected, automatically try a different sound format.
-    final choices = manifest.audioOnly.sortByBitrate().take(3).toList();
+    final choices = rankAudioByDataCost<AudioOnlyStreamInfo>(
+      streams: manifest.audioOnly,
+      profile: profile,
+      bitrateBitsPerSecond: (s) => s.bitrate.bitsPerSecond,
+      sizeBytes: (s) => s.size.totalBytes,
+      audioCodec: (s) => s.audioCodec,
+    ).take(3).toList();
     final root = await getApplicationSupportDirectory();
     final tempDir = Directory(root.path + '/melotr_jobs/yt_' +
         DateTime.now().microsecondsSinceEpoch.toString());
     await tempDir.create(recursive: true);
     Object? lastFailure;
+    var totalDownloadedBytes = 0;
 
     try {
       for (var attempt = 0; attempt < choices.length; attempt++) {
@@ -77,13 +85,25 @@ class YoutubeMusicService {
             choices.length.toString();
         final input = File(tempDir.path + '/source_' + attempt.toString() +
             '.' + streamInfo.container.name);
-        onStatus('2/4 · Ses kaynağı ' + attemptLabel + ' deneniyor…');
+        final predictedMb = streamInfo.size.totalBytes > 0
+            ? streamInfo.size.totalBytes / (1024 * 1024)
+            : profile.estimatedMegaBytes(video.duration);
+        if (predictedMb > profile.downloadLimitMegabytes) {
+          throw FormatException('Sesin tahmini boyutu ' +
+              predictedMb.toStringAsFixed(1) + ' MB. ' +
+              profile.label + ' profilinin ' +
+              profile.downloadLimitMegabytes.toString() +
+              ' MB veri sınırı aşılıyor.');
+        }
+        onStatus('2/4 · Akış ' + attemptLabel + ' · yaklaşık ' +
+            predictedMb.toStringAsFixed(1) + ' MB · ' +
+            profile.label);
         onProgress(0);
+        var received = 0;
         try {
           final sink = input.openWrite();
           final began = DateTime.now();
           var lastTick = DateTime.fromMillisecondsSinceEpoch(0);
-          var received = 0;
           try {
             final bytesStream = _youtube.videos.streams.get(streamInfo)
                 .timeout(
@@ -102,6 +122,12 @@ class YoutubeMusicService {
                 }
                 final chunk = iterator.current;
                 received += chunk.length;
+                totalDownloadedBytes += chunk.length;
+                if (totalDownloadedBytes > profile.downloadLimitBytes) {
+                  throw FormatException('Mobil veri sınırı aşıldı (' +
+                      profile.downloadLimitMegabytes.toString() + ' MB). ' +
+                      'Aktarım otomatik durduruldu.');
+                }
                 if (received > 180 * 1024 * 1024) {
                   throw const FormatException('Ses akışı 180 MB sınırını aştı');
                 }
@@ -138,9 +164,20 @@ class YoutubeMusicService {
         } on DownloadCancelled {
           rethrow;
         } catch (e) {
+          // Do not waste mobile data by downloading another full source
+          // after substantial bytes have already been received.
+          if (received >= 256 * 1024 ||
+              totalDownloadedBytes >= profile.downloadLimitBytes) {
+            throw FormatException(
+                'Veri tasarrufu: ' +
+                (totalDownloadedBytes / (1024 * 1024))
+                    .toStringAsFixed(1) +
+                ' MB kullanıldı. Aynı medya tekrar indirilmedi. ' +
+                'Son hata: ' + e.toString());
+          }
           lastFailure = e;
           onStatus('2/4 · Akış ' + attemptLabel +
-              ' başarısız. Alternatif deneniyor…');
+              ' erişilemedi. Düşük veri kaybıyla alternatif deneniyor…');
           // An incomplete file has no usable audio; remove just this copy.
           try {
             if (await input.exists()) await input.delete();
@@ -153,7 +190,7 @@ class YoutubeMusicService {
         return await _converter.fromAppTemporaryMedia(
           mediaFile: input,
           title: video.title,
-          kbps: kbps,
+          kbps: profile.outputMp3Kbps,
           onStatus: onStatus,
           cancellation: cancellation,
         );

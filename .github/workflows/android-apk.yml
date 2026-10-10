@@ -21,6 +21,8 @@ jobs:
           test -s lib/mp3_import_service.dart
           test -s lib/mp3_import_tools.dart
           test -s lib/youtube_music_service.dart
+          test -s lib/audio_data_profile.dart
+          test -s test/audio_data_profile_test.dart
           test -s lib/youtube_music_page.dart
           test -s lib/download_control.dart
           test -s test/download_control_test.dart
@@ -72,11 +74,11 @@ jobs:
           apk="build/app/outputs/flutter-apk/app-release.apk"
           test -s "$apk"
           ls -lh "$apk"
-          if gh release view v0.1.6 >/dev/null 2>&1; then
-            gh release upload v0.1.6 "$apk#MeloTR-v0.1.6.apk" --clobber
+          if gh release view v0.1.7 >/dev/null 2>&1; then
+            gh release upload v0.1.7 "$apk#MeloTR-v0.1.7.apk" --clobber
           else
-            gh release create v0.1.6 "$apk#MeloTR-v0.1.6.apk" \
+            gh release create v0.1.7 "$apk#MeloTR-v0.1.7.apk" \
               --target "$GITHUB_SHA" \
-              --title "MeloTR v0.1.6" \
+              --title "MeloTR v0.1.7" \
               --notes "Android universal release APK. Telefonunuza indirip yükleyebilirsiniz."
           fi

@@ -862,7 +862,7 @@ class SettingsPage extends StatelessWidget {
       onTap: library.loading ? null : () => unawaited(library.refresh())),
     const SectionHeading(title: 'Uygulama', icon: Icons.info_outline_rounded),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
-      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.3 • YouTube arama ve MP3',
+      title: Text('MeloTR'), subtitle: Text('Sürüm 0.1.7 • YouTube arama ve MP3',
         style: TextStyle(color: _muted))),
     const ListTile(contentPadding: EdgeInsets.symmetric(horizontal: 22),
       title: Text('Gizlilik'), subtitle: Text('Üyelik ve sunucu yok. Favoriler ve listeler cihazında saklanır.',
