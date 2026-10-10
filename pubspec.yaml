@@ -214,3 +214,6 @@ dependency_overrides:
   # no longer compiles under Kotlin 2.2. 5.0.1 still exposes the deprecated
   # accelerometerEvents/gyroscopeEvents streams that parallax_sensors_bg uses.
   sensors_plus: ^5.0.1
+  # dynamic_color 1.9.0 uses Kotlin DSL compilerOptions requiring a newer AGP/KGP.
+  # Keep the pre-1.9 Android plugin for this Flutter 3.41 build.
+  dynamic_color: 1.8.1
