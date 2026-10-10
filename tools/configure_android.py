@@ -58,3 +58,33 @@ for density in ['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']:
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_icon, target)
 print('Android izinleri, medya servisi ve MeloTR ikonu eklendi.')
+
+
+# Native NewPipeExtractor requires Android API 24+, JitPack and Java desugaring.
+# The CI generates Android Gradle Kotlin DSL files with flutter create.
+app_gradle = root / 'android/app/build.gradle.kts'
+if not app_gradle.is_file():
+    raise SystemExit('NewPipe: Android app Gradle Kotlin DSL bulunamadı.')
+content = app_gradle.read_text(encoding='utf-8')
+content = content.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
+content = content.replace('compileSdk = flutter.compileSdkVersion', 'compileSdk = 36')
+if 'isCoreLibraryDesugaringEnabled = true' not in content:
+    if 'compileOptions {' not in content:
+        raise SystemExit('NewPipe: Gradle compileOptions alanı bulunamadı.')
+    content = content.replace('compileOptions {',
+        'compileOptions {\n        isCoreLibraryDesugaringEnabled = true', 1)
+if 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:' not in content:
+    content += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")\n}\n'
+app_gradle.write_text(content, encoding='utf-8')
+
+root_gradle = root / 'android/build.gradle.kts'
+if not root_gradle.is_file():
+    raise SystemExit('NewPipe: Android root Gradle Kotlin DSL bulunamadı.')
+content = root_gradle.read_text(encoding='utf-8')
+if 'jitpack.io' not in content:
+    if 'mavenCentral()' not in content:
+        raise SystemExit('NewPipe: mavenCentral bulunamadı.')
+    content = content.replace('mavenCentral()',
+        'mavenCentral()\n        maven(url = "https://jitpack.io")', 1)
+root_gradle.write_text(content, encoding='utf-8')
+print('NewPipe: Android 24 / JitPack / core library desugaring hazir.')
