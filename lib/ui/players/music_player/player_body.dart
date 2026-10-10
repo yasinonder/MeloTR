@@ -456,7 +456,7 @@ class _ExpandedPlayerBodyState extends State<ExpandedPlayerBody> {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: AppAnimatedIcon(
-                  isFavorite ? Ionicons.heart : Ionicons.heart_outline,
+                  isFavorite ? Ionicons.heart : Icons.favorite_border,
                   key: ValueKey(song.id+isFavorite.toString()),
                   color: isFavorite ? null : textColor(provider).withOpacity(0.6),
                 ),
