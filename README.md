@@ -181,3 +181,26 @@ temizler. İndirme testi üzerinde Android gerçek cihaz doğrulaması gerekir.
 Bu mekanizma YouTube erişim denetimlerini aşmaz. Yalnızca içeriği indirmeye
 yetkili kullanıcılar için tasarlanmıştır. Y2Mate/YTMP3'in kapalı sunucu API'ları
 kullanılmamış veya ürünün içine gizlice entegre edilmemiştir.
+
+
+## v0.2.0 — Deneysel NewPipe Android ses motoru
+
+Ara > YouTube bölümünde "Motor" menüsü eklendi:
+- **NewPipe (deneme)**: SongTube'un Flutter eklentisi
+  [NewPipeExtractor_Dart](https://github.com/SongTube/NewPipeExtractor_Dart)
+  ve NewPipeExtractor v0.26.4 ile yalnızca ses akışları bulunur.
+- **Eski motor**: mevcut youtube_explode_dart akışı aynen kullanılabilir.
+
+NewPipe Android API 24+, JitPack ve desugaring gerektirir. Deneme sürümü
+ses kaynağını NewPipe ile bulur, mümkün olan akışı sınırlandırılmış HTTP
+Range indirme ile alır, FFmpeg ile MP3'e dönüştürür ve MediaStore'a yazar.
+20/40/60 MB mobil veri üst sınırı, indirme iptali, 64/96/160 kbps kaynak
+tercihleri ve kullanıcıya ait medya dosyalarını silmeme kuralı korunur.
+HTTP 401/403/429 erişim reddi durumunda diğer kaynaklar denenmez.
+APK derlemesi cihaz üzerinde YouTube'dan indirmenin çalıştığını
+kanıtlamaz; gerçek cihazda ayrıca test edilmelidir.
+
+**Lisans:** NewPipeExtractor_Dart ve NewPipeExtractor GPL-3.0 lisanslıdır.
+MeloTR'nin bu sürümüne dahil edilen GPL-3.0 bileşenlerinin dağıtım
+yükümlülüklerine dikkat edilmelidir. Lisansın tam metni LICENSE dosyasında
+bulunur. Kaynak: https://github.com/SongTube/NewPipeExtractor_Dart
