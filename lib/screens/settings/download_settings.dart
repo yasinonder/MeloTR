@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:melotube/languages/languages.dart';
 import 'package:melotube/providers/app_settings.dart';
 import 'package:melotube/internal/global.dart';
@@ -28,7 +27,7 @@ class _DownloadSettingsState extends State<DownloadSettings> {
         SettingTileSlider(
           title: Languages.of(context)!.labelSimultaneousDownloads,
           subtitle: Languages.of(context)!.labelSimultaneousDownloadsDescription,
-          leadingIcon: Ionicons.cloud_download_outline,
+          leadingIcon: Icons.download_for_offline_outlined,
           value: AppSettings.maxSimultaneousDownloads.roundToDouble(),
           min: 1,
           max: 6,
@@ -43,7 +42,7 @@ class _DownloadSettingsState extends State<DownloadSettings> {
         SettingTileDropdown(
           title: Languages.of(context)!.labelInstantDownloadFormat,
           subtitle: Languages.of(context)!.labelInstantDownloadFormatDescription,
-          leadingIcon: Ionicons.flash_outline,
+          leadingIcon: Icons.flash_on_outlined,
           currentValue: sharedPreferences.getString('instant_download_format') ?? 'AAC',
           items: const [
             DropdownMenuItem(
