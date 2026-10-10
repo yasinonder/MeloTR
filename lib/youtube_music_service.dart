@@ -61,83 +61,109 @@ class YoutubeMusicService {
     if (manifest.audioOnly.isEmpty) {
       throw const FormatException('Bu video için indirilebilir ses bulunamadı.');
     }
-    final info = manifest.audioOnly.withHighestBitrate();
+    // If one stream is rejected, automatically try a different sound format.
+    final choices = manifest.audioOnly.sortByBitrate().take(3).toList();
     final root = await getApplicationSupportDirectory();
-    final work = Directory(root.path + '/melotr_jobs/yt_' +
+    final tempDir = Directory(root.path + '/melotr_jobs/yt_' +
         DateTime.now().microsecondsSinceEpoch.toString());
-    await work.create(recursive: true);
+    await tempDir.create(recursive: true);
+    Object? lastFailure;
+
     try {
-    final input = File(work.path + '/source.' + info.container.name);
-    onStatus('2/4 · Ses akışı indiriliyor…');
-    final sink = input.openWrite();
-    final started = DateTime.now();
-    var lastUiTick = DateTime.fromMillisecondsSinceEpoch(0);
-    int received = 0;
-    try {
-      final bytesStream = _youtube.videos.streams.get(info).timeout(
-        const Duration(seconds:25),
-        onTimeout: (events) => events.addError(TimeoutException(
-          'YouTube ses verisi 25 saniyedir gelmiyor. '
-          'Bağlantı veya video erişimi engellenmiş olabilir.',
-        )),
-      );
-      final iterator = StreamIterator<List<int>>(bytesStream);
-      cancellation.registerStop(() => iterator.cancel());
-      try {
-        while (await cancellation.untilCancelled(iterator.moveNext())) {
-          cancellation.check();
-          final bytes = iterator.current;
-          if (DateTime.now().difference(started) >
-              const Duration(minutes:5)) {
-            throw TimeoutException('İndirme 5 dakikayı geçti ve durduruldu.');
-          }
-          received += bytes.length;
-          if (received > 180 * 1024 * 1024) {
-            throw const FormatException('Ses verisi beklenenden büyük; işlem durduruldu.');
-          }
-          sink.add(bytes);
-          final now = DateTime.now();
-          if (now.difference(lastUiTick).inMilliseconds >= 400 ||
-              (info.size.totalBytes > 0 && received >= info.size.totalBytes)) {
-            lastUiTick = now;
-            final mb = (received / (1024 * 1024)).toStringAsFixed(1);
-            onStatus('2/4 · Ses indiriliyor: $mb MB');
-            if (info.size.totalBytes > 0) {
-              onProgress((received / info.size.totalBytes).clamp(0.0, 1.0));
-            }
-          }
-        }
+      for (var attempt = 0; attempt < choices.length; attempt++) {
         cancellation.check();
-        await sink.flush();
-      } finally {
-        cancellation.registerStop(null);
-        await iterator.cancel().timeout(const Duration(seconds:8),
-            onTimeout: () {});
+        final streamInfo = choices[attempt];
+        final attemptLabel = (attempt + 1).toString() + '/' +
+            choices.length.toString();
+        final input = File(tempDir.path + '/source_' + attempt.toString() +
+            '.' + streamInfo.container.name);
+        onStatus('2/4 · Ses kaynağı ' + attemptLabel + ' deneniyor…');
+        onProgress(0);
+        try {
+          final sink = input.openWrite();
+          final began = DateTime.now();
+          var lastTick = DateTime.fromMillisecondsSinceEpoch(0);
+          var received = 0;
+          try {
+            final bytesStream = _youtube.videos.streams.get(streamInfo)
+                .timeout(
+              const Duration(seconds:18),
+              onTimeout: (events) => events.addError(
+                TimeoutException('18 saniyedir ses verisi alınamadı')),
+            );
+            final iterator = StreamIterator<List<int>>(bytesStream);
+            cancellation.registerStop(() => iterator.cancel());
+            try {
+              while (await cancellation.untilCancelled(iterator.moveNext())) {
+                cancellation.check();
+                if (DateTime.now().difference(began) >
+                    const Duration(minutes:2)) {
+                  throw TimeoutException('Bu ses akışı iki dakikayı aştı');
+                }
+                final chunk = iterator.current;
+                received += chunk.length;
+                if (received > 180 * 1024 * 1024) {
+                  throw const FormatException('Ses akışı 180 MB sınırını aştı');
+                }
+                sink.add(chunk);
+                final now = DateTime.now();
+                if (now.difference(lastTick).inMilliseconds >= 500 ||
+                    (streamInfo.size.totalBytes > 0 &&
+                        received >= streamInfo.size.totalBytes)) {
+                  lastTick = now;
+                  final amount = (received / (1024 * 1024))
+                      .toStringAsFixed(1);
+                  onStatus('2/4 · Akış ' + attemptLabel +
+                      ' · ' + amount + ' MB indirildi');
+                  if (streamInfo.size.totalBytes > 0) {
+                    onProgress((received / streamInfo.size.totalBytes)
+                        .clamp(0.0, 1.0));
+                  }
+                }
+              }
+              cancellation.check();
+              await sink.flush();
+            } finally {
+              cancellation.registerStop(null);
+              await iterator.cancel()
+                  .timeout(const Duration(seconds:5), onTimeout: () {});
+            }
+          } finally {
+            await sink.close();
+          }
+          cancellation.check();
+          if (!await input.exists() || await input.length() < 1024) {
+            throw const FormatException('Ses akışı boş veya eksik');
+          }
+        } on DownloadCancelled {
+          rethrow;
+        } catch (e) {
+          lastFailure = e;
+          onStatus('2/4 · Akış ' + attemptLabel +
+              ' başarısız. Alternatif deneniyor…');
+          // An incomplete file has no usable audio; remove just this copy.
+          try {
+            if (await input.exists()) await input.delete();
+          } catch (_) {}
+          continue;
+        }
+        onProgress(1.0);
+        // If conversion fails, retain this complete temporary input
+        // for diagnostics. The converter deletes it only on MP3 success.
+        return await _converter.fromAppTemporaryMedia(
+          mediaFile: input,
+          title: video.title,
+          kbps: kbps,
+          onStatus: onStatus,
+          cancellation: cancellation,
+        );
       }
-    } on SocketException catch (e) {
-      throw FormatException('YouTube bağlantısı kesildi: ${e.message}');
+      throw FormatException('Bu videodan ses alınamadı. ' +
+          choices.length.toString() +
+          ' akış denendi. Son hata: ' + lastFailure.toString());
     } on DownloadCancelled {
-      rethrow;
-    } finally {
-      await sink.close();
-    }
-    cancellation.check();
-    if (!await input.exists() || await input.length() < 1024) {
-      throw const FormatException('İndirilen ses boş veya hatalı.');
-    }
-    onProgress(1.0);
-    // The converter removes temporary bytes only after MediaStore verification.
-    return await _converter.fromAppTemporaryMedia(
-        mediaFile: input,
-        title: video.title,
-        kbps: kbps,
-        onStatus: onStatus,
-        cancellation: cancellation,
-      );
-    } on DownloadCancelled {
-      // Deleting our incomplete transfer is safe; user originals untouched.
       try {
-        if (await work.exists()) await work.delete(recursive:true);
+        if (await tempDir.exists()) await tempDir.delete(recursive:true);
       } catch (_) {}
       rethrow;
     }

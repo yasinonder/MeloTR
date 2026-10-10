@@ -126,3 +126,7 @@ Kullanıcı iptalinde uygulamaya ait eksik/geçici dosyalar temizlenir;
 telefondan önceden seçilen orijinal videolara dokunulmaz.
 Android MediaStore'a MP3 kaydetme son aşamasında kayıt bütünlüğü için
 iptal devre dışı kalır. İptal davranışı için otomatik testler eklendi.
+
+## v0.1.6 – YouTube ses akışında alternatif denemeler
+
+İndirme aşaması 2/4'te ses verisi alamazsa 18 saniyelik hareketsizlikten sonra başka bir ses kalitesi/biçimi otomatik denenir (en fazla üç akış). İndirilen MB ve kaçıncı akışın denendiği görüntülenir. Her akışın etkin aktarımı iki dakika ile sınırlıdır. Başarısız denemeler gerekçeli hata gösterir ve eksik geçici dosyaları temizler. Gerçek YouTube indirme başarısı, YouTube'un erişim kısıtlarına bağlıdır.

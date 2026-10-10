@@ -72,11 +72,11 @@ jobs:
           apk="build/app/outputs/flutter-apk/app-release.apk"
           test -s "$apk"
           ls -lh "$apk"
-          if gh release view v0.1.5 >/dev/null 2>&1; then
-            gh release upload v0.1.5 "$apk#MeloTR-v0.1.5.apk" --clobber
+          if gh release view v0.1.6 >/dev/null 2>&1; then
+            gh release upload v0.1.6 "$apk#MeloTR-v0.1.6.apk" --clobber
           else
-            gh release create v0.1.5 "$apk#MeloTR-v0.1.5.apk" \
+            gh release create v0.1.6 "$apk#MeloTR-v0.1.6.apk" \
               --target "$GITHUB_SHA" \
-              --title "MeloTR v0.1.5" \
+              --title "MeloTR v0.1.6" \
               --notes "Android universal release APK. Telefonunuza indirip yükleyebilirsiniz."
           fi
