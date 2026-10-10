@@ -121,7 +121,7 @@ class _VideoPlayerPlaylistContentState extends State<VideoPlayerPlaylistContent>
                               return AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 300),
                                 child: AppAnimatedIcon(
-                                  containsPlaylist ? Ionicons.heart : Ionicons.heart_outline,
+                                  containsPlaylist ? Ionicons.heart : Icons.favorite_border,
                                   key: ValueKey(containsPlaylist),
                                   size: 20,
                                   color: containsPlaylist ? null : Theme.of(context).iconTheme.color?.withOpacity(0.6),
