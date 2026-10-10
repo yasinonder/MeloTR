@@ -186,14 +186,19 @@ class YoutubeMusicService {
             if (check.statusCode == 200 || check.statusCode == 206) {
               onStatus('2/4 · Akış ' + attemptLabel +
                   ' · Alternatif HTTP aktarımı başlıyor…');
+              var fallbackCountedBytes = 0;
               try {
-                final httpBytes = await SignedAudioTransfer().download(
+                await SignedAudioTransfer().download(
                   uri: streamInfo.url,
                   destination: input,
                   cancellation: cancellation,
                   byteLimit: profile.downloadLimitBytes - totalDownloadedBytes,
                   expectedBytes: streamInfo.size.totalBytes,
                   onUpdate: (amount, expected) {
+                    if (amount > fallbackCountedBytes) {
+                      totalDownloadedBytes += amount - fallbackCountedBytes;
+                      fallbackCountedBytes = amount;
+                    }
                     final mb = (amount / (1024 * 1024)).toStringAsFixed(2);
                     onStatus('2/4 · Alternatif HTTP · ' + mb + ' MB indirildi');
                     if (expected != null && expected > 0) {
@@ -201,8 +206,7 @@ class YoutubeMusicService {
                     }
                   },
                 );
-                totalDownloadedBytes += httpBytes;
-                received = httpBytes;
+                received = fallbackCountedBytes;
                 onStatus('2/4 · HTTP aktarımı tamamlandı, MP3 hazırlanıyor…');
                 onProgress(1.0);
                 return await _converter.fromAppTemporaryMedia(
@@ -215,6 +219,7 @@ class YoutubeMusicService {
               } on DownloadCancelled {
                 rethrow;
               } catch (httpError) {
+                received = fallbackCountedBytes;
                 failure = FormatException(
                     'Kütüphane aktarımı: ' + e.toString() +
                     ' | Doğrudan HTTP aktarımı: ' + httpError.toString());

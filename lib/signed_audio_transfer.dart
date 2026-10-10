@@ -139,7 +139,7 @@ class SignedAudioTransfer {
             if (downloaded > byteLimit) {
               throw const FormatException('Mobil veri sınırı aşıldı.');
             }
-            if (total != null && downloaded > total!) {
+            if (total != null && downloaded > total) {
               throw const FormatException('HTTP verisi belirtilen boyuttan fazla.');
             }
             output.add(bytes);
