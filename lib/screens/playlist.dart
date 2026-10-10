@@ -326,7 +326,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     ),
                     margin: const EdgeInsets.only(right: 12),
                     padding: const EdgeInsets.all(12),
-                    child: Icon(Ionicons.shuffle_outline, color: Theme.of(context).iconTheme.color),
+                    child: Icon(Icons.shuffle, color: Theme.of(context).iconTheme.color),
                   ),
                 ),
                 InkWell(
