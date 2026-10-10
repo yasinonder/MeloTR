@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:newpipeextractor_dart/extractors/videos.dart';
 import 'package:newpipeextractor_dart/newpipeextractor_dart.dart';
@@ -87,7 +86,7 @@ class _DownloadContentMenuState extends State<DownloadContentMenu> {
                   child: video != null ? Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _optionTile(context, title: Languages.of(context)!.labelMusic, subtitle: Languages.of(context)!.labelMusicDownloadDescription, icon: Ionicons.musical_notes_outline, onTap: () {
+                      _optionTile(context, title: Languages.of(context)!.labelMusic, subtitle: Languages.of(context)!.labelMusicDownloadDescription, icon: Icons.music_notes_outline, onTap: () {
                         // Open Music Download Menu
                         Navigator.pop(context);
                         UiUtils.showModal(
@@ -97,7 +96,7 @@ class _DownloadContentMenuState extends State<DownloadContentMenu> {
                           ),
                         );
                       }),
-                      _optionTile(context, title: Languages.of(context)!.labelVideo, subtitle: Languages.of(context)!.labelVideoDownloadDescription, icon: Ionicons.videocam_outline, onTap: () {
+                      _optionTile(context, title: Languages.of(context)!.labelVideo, subtitle: Languages.of(context)!.labelVideoDownloadDescription, icon: Icons.videocam_outlined, onTap: () {
                         // Open Video Download Menu
                         Navigator.pop(context);
                         UiUtils.showModal(
@@ -107,7 +106,7 @@ class _DownloadContentMenuState extends State<DownloadContentMenu> {
                           )
                         );
                       }),
-                      _optionTile(context, title: Languages.of(context)!.labelInstant, subtitle: Languages.of(context)!.labelInstantDescription, icon: Ionicons.flash_outline,
+                      _optionTile(context, title: Languages.of(context)!.labelInstant, subtitle: Languages.of(context)!.labelInstantDescription, icon: Icons.flash_on_outlined,
                         trailing: SizedBox(
                           height: 30,
                           child: Consumer<MediaProvider>(
