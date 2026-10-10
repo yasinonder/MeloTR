@@ -218,6 +218,9 @@ class YoutubeMusicService {
                 );
               } on DownloadCancelled {
                 rethrow;
+              } on AudioAccessDenied {
+                // HTTP 403/401/429 is an origin access denial, not low quality.
+                rethrow;
               } catch (httpError) {
                 received = fallbackCountedBytes;
                 failure = FormatException(
@@ -226,9 +229,7 @@ class YoutubeMusicService {
               }
             }
             if (check.accessBlocked) {
-              // Alternative bitrates on the same origin often share the block.
-              // Do not burn more data/requests without user action.
-              throw failure;
+              throw AudioAccessDenied(check.statusCode!);
             }
           }
           // Do not waste mobile data by downloading another full source
