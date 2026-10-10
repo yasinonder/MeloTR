@@ -8,8 +8,11 @@ void main() {
     final control = DownloadControl();
     final hung = Completer<String>();
     final result = control.untilCancelled(hung.future);
+    // Attach the error listener before cancellation to avoid an unhandled
+    // asynchronous exception reported by flutter_test.
+    final assertion = expectLater(result, throwsA(isA<DownloadCancelled>()));
     await control.cancel();
-    await expectLater(result, throwsA(isA<DownloadCancelled>()));
+    await assertion;
     expect(control.isCancelled, isTrue);
   });
 
