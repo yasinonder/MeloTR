@@ -122,21 +122,18 @@ class YoutubeMusicService {
       await sink.close();
     }
     cancellation.check();
-    cancellation.check();
     if (!await input.exists() || await input.length() < 1024) {
       throw const FormatException('İndirilen ses boş veya hatalı.');
     }
     onProgress(1.0);
     // The converter removes temporary bytes only after MediaStore verification.
-    try {
-      return await _converter.fromAppTemporaryMedia(
+    return await _converter.fromAppTemporaryMedia(
         mediaFile: input,
         title: video.title,
         kbps: kbps,
         onStatus: onStatus,
         cancellation: cancellation,
       );
-    }
     } on DownloadCancelled {
       // Deleting our incomplete transfer is safe; user originals untouched.
       try {
